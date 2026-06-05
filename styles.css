@@ -1,0 +1,278 @@
+:root {
+  --bg: #f7f3e8;
+  --surface: #fffaf0;
+  --surface-strong: #fff;
+  --text: #242018;
+  --muted: #756b5b;
+  --line: #e7dcc7;
+  --accent: #ff7a45;
+  --accent-dark: #d9531e;
+  --green: #2f8f5b;
+  --shadow: 0 24px 60px rgba(69, 47, 18, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family:
+    Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 122, 69, 0.22), transparent 34rem),
+    linear-gradient(135deg, #fff8ea 0%, var(--bg) 58%, #eef7e9 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  color: white;
+  background: var(--accent);
+  box-shadow: 0 12px 24px rgba(255, 122, 69, 0.24);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+button:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+.ghost {
+  color: var(--accent-dark);
+  background: #fff3e8;
+  box-shadow: none;
+}
+
+.app {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+
+.brand,
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+
+h1 {
+  max-width: 640px;
+  font-size: clamp(38px, 7vw, 72px);
+  line-height: 0.98;
+}
+
+h2 {
+  font-size: clamp(24px, 4vw, 36px);
+}
+
+.description {
+  max-width: 560px;
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.date-card,
+.panel {
+  border: 1px solid rgba(231, 220, 199, 0.85);
+  border-radius: 28px;
+  background: rgba(255, 250, 240, 0.82);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.date-card {
+  min-width: 188px;
+  padding: 24px;
+}
+
+.date-card span,
+.field span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.date-card strong {
+  display: block;
+  font-size: 24px;
+}
+
+.panel {
+  margin-top: 18px;
+  padding: 24px;
+}
+
+.search-row,
+.meal-header,
+.actions {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+}
+
+.grow {
+  flex: 1;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: var(--text);
+  background: var(--surface-strong);
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 122, 69, 0.15);
+}
+
+.compact {
+  min-width: 180px;
+}
+
+.school-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.school-button {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.school-button:hover {
+  color: white;
+}
+
+.meal-panel {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.meal-header {
+  justify-content: space-between;
+}
+
+.meal-card {
+  min-height: 240px;
+  margin-top: 22px;
+  border-radius: 24px;
+  padding: 28px;
+  background: linear-gradient(135deg, #fff7df, #ffffff);
+  border: 1px solid var(--line);
+}
+
+.meal-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.meal-title h3 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.calorie {
+  color: var(--green);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.menu-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.menu-list li {
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #f0e4cf;
+  font-weight: 700;
+}
+
+.notice,
+.empty {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.actions {
+  margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .app {
+    width: min(100% - 24px, 980px);
+    padding: 28px 0;
+  }
+
+  .hero,
+  .search-row,
+  .meal-header,
+  .actions {
+    display: grid;
+  }
+
+  .compact {
+    min-width: 0;
+  }
+
+  button {
+    width: 100%;
+  }
+}

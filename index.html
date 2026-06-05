@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>오늘급식 테스트</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div>
+          <p class="brand">오늘급식</p>
+          <h1>우리 학교 급식을 빠르게 확인해요.</h1>
+          <p class="description">
+            학교를 검색하고 날짜를 고르면 오늘의 점심 메뉴를 바로 보여주는 테스트 웹입니다.
+          </p>
+        </div>
+        <div class="date-card">
+          <span id="dayName">오늘</span>
+          <strong id="todayLabel">0000.00.00</strong>
+        </div>
+      </section>
+
+      <section class="panel">
+        <label class="field">
+          <span>나이스 API 키</span>
+          <input id="apiKeyInput" type="password" placeholder="없으면 예시 데이터로 테스트" />
+        </label>
+
+        <div class="search-row">
+          <label class="field grow">
+            <span>학교 이름</span>
+            <input id="schoolInput" type="search" placeholder="예: 서울고등학교" />
+          </label>
+          <button id="searchButton" type="button">학교 검색</button>
+        </div>
+
+        <div id="schoolResults" class="school-results" aria-live="polite"></div>
+      </section>
+
+      <section class="panel meal-panel">
+        <div class="meal-header">
+          <div>
+            <p class="eyebrow">선택한 학교</p>
+            <h2 id="selectedSchool">테스트 학교</h2>
+          </div>
+          <label class="field compact">
+            <span>날짜</span>
+            <input id="dateInput" type="date" />
+          </label>
+        </div>
+
+        <div id="mealCard" class="meal-card">
+          <p class="empty">학교를 검색하거나 예시 급식을 확인해보세요.</p>
+        </div>
+
+        <div class="actions">
+          <button id="loadMealButton" type="button">급식 불러오기</button>
+          <button id="sampleButton" class="ghost" type="button">예시 보기</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
