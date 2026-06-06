@@ -9,8 +9,13 @@ const profileNumber = document.querySelector("#profileNumber");
 const profileName = document.querySelector("#profileName");
 const welcomeText = document.querySelector("#welcomeText");
 const logoutButton = document.querySelector("#logoutButton");
+const mypageLogoutButton = document.querySelector("#mypageLogoutButton");
 const attendanceCard = document.querySelector("#attendanceCard");
 const attendanceCount = document.querySelector("#attendanceCount");
+const profileSummary = document.querySelector("#profileSummary");
+const profileSchoolName = document.querySelector("#profileSchoolName");
+const profileAttendance = document.querySelector("#profileAttendance");
+const profileMealType = document.querySelector("#profileMealType");
 const showSearchButton = document.querySelector("#showSearchButton");
 const searchPanel = document.querySelector("#searchPanel");
 const apiKeyInput = document.querySelector("#apiKeyInput");
@@ -38,6 +43,8 @@ const mealTabs = document.querySelectorAll(".meal-tab");
 const commentList = document.querySelector("#commentList");
 const commentInput = document.querySelector("#commentInput");
 const addCommentButton = document.querySelector("#addCommentButton");
+const pagePanels = document.querySelectorAll(".page-panel");
+const navButtons = document.querySelectorAll(".nav-button");
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 const sampleSchool = {
@@ -130,6 +137,7 @@ function openDashboard() {
   renderSampleMonth();
   renderMeal();
   renderComments();
+  showPage("home");
 }
 
 function openLogin() {
@@ -149,12 +157,18 @@ function renderUser() {
   if (isGuest) {
     welcomeText.textContent = "게스트로 급식만 확인 중";
     attendanceCard.hidden = true;
+    profileSummary.textContent = "게스트";
+    profileAttendance.textContent = "0일";
+    profileMealType.textContent = currentMealType === "lunch" ? "점심" : "저녁";
     return;
   }
 
   welcomeText.textContent = `${currentUser.name}님, ${currentUser.grade}학년 ${currentUser.class}반`;
   attendanceCard.hidden = false;
   attendanceCount.textContent = `${getAttendanceDays().length || 1}일`;
+  profileSummary.textContent = `${currentUser.name} · ${currentUser.grade}학년 ${currentUser.class}반 ${currentUser.number}번`;
+  profileAttendance.textContent = `${getAttendanceDays().length || 1}일`;
+  profileMealType.textContent = currentMealType === "lunch" ? "점심" : "저녁";
 }
 
 function getAttendanceDays() {
@@ -172,9 +186,24 @@ function markAttendance() {
 
 function renderSelectedSchool() {
   selectedSchoolLabel.textContent = currentSchool.name;
+  profileSchoolName.textContent = currentSchool.name;
   if (currentUser && !currentUser.isGuest && currentUser.school) {
     profileSchool.value = currentUser.school;
   }
+}
+
+function showPage(pageName) {
+  pagePanels.forEach((panel) => {
+    panel.classList.toggle("active-page", panel.dataset.page === pageName);
+  });
+  navButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.targetPage === pageName);
+  });
+  if (pageName === "mypage") {
+    renderUser();
+    renderSelectedSchool();
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function renderDate() {
@@ -496,6 +525,12 @@ logoutButton.addEventListener("click", () => {
   openLogin();
 });
 
+mypageLogoutButton.addEventListener("click", () => {
+  currentUser = null;
+  localStorage.removeItem("schoolMealUser");
+  openLogin();
+});
+
 showSearchButton.addEventListener("click", () => {
   searchPanel.hidden = !searchPanel.hidden;
 });
@@ -517,6 +552,13 @@ mealTabs.forEach((tab) => {
     currentMealType = tab.dataset.mealType;
     mealTabs.forEach((button) => button.classList.toggle("active", button === tab));
     renderMeal();
+    renderUser();
+  });
+});
+
+navButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.targetPage);
   });
 });
 

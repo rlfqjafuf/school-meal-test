@@ -60,7 +60,7 @@
           </div>
         </header>
 
-        <section id="attendanceCard" class="stat-card">
+        <section id="attendanceCard" class="stat-card page-panel active-page" data-page="home">
           <div>
             <span>연속 출석</span>
             <strong id="attendanceCount">1일</strong>
@@ -68,7 +68,7 @@
           <div class="stat-icon">🔥</div>
         </section>
 
-        <section id="searchPanel" class="card search-card" hidden>
+        <section id="searchPanel" class="card search-card page-panel active-page" data-page="home" hidden>
           <label class="field">
             <span>나이스 API 키</span>
             <input id="apiKeyInput" type="password" placeholder="없으면 예시 데이터로 테스트" />
@@ -85,7 +85,7 @@
           <div id="schoolResults" class="school-results" aria-live="polite"></div>
         </section>
 
-        <section class="card calendar-card">
+        <section class="card calendar-card page-panel" data-page="calendar">
           <div class="card-title">
             <button id="prevDayButton" class="text-button" type="button">‹</button>
             <h2 id="dateTitle">오늘</h2>
@@ -98,7 +98,7 @@
           </label>
         </section>
 
-        <section class="card monthly-card">
+        <section class="card monthly-card page-panel" data-page="calendar">
           <div class="monthly-heading">
             <div>
               <p>월간 급식표</p>
@@ -118,7 +118,7 @@
           <div id="monthlyMealList" class="monthly-meal-list" aria-live="polite"></div>
         </section>
 
-        <section class="card meal-card">
+        <section class="card meal-card page-panel active-page" data-page="home">
           <div class="meal-heading">
             <div>
               <p id="selectedSchoolLabel">테스트 학교</p>
@@ -145,7 +145,7 @@
           </div>
         </section>
 
-        <section class="card comment-card">
+        <section class="card comment-card page-panel" data-page="chat">
           <h2>급식 의견</h2>
           <div id="commentList" class="comment-list"></div>
           <div id="commentForm" class="comment-form">
@@ -153,6 +153,52 @@
             <button id="addCommentButton" class="primary-button compact-button" type="button">등록</button>
           </div>
         </section>
+
+        <section class="card mypage-card page-panel" data-page="mypage">
+          <div class="mypage-hero">
+            <div class="mypage-avatar" aria-hidden="true">👤</div>
+            <div>
+              <p>마이페이지</p>
+              <h2 id="profileSummary">게스트</h2>
+            </div>
+          </div>
+
+          <div class="profile-list">
+            <div>
+              <span>학교</span>
+              <strong id="profileSchoolName">테스트 학교</strong>
+            </div>
+            <div>
+              <span>출석</span>
+              <strong id="profileAttendance">0일</strong>
+            </div>
+            <div>
+              <span>현재 급식</span>
+              <strong id="profileMealType">점심</strong>
+            </div>
+          </div>
+
+          <button id="mypageLogoutButton" class="secondary-button full-button" type="button">로그아웃</button>
+        </section>
+
+        <nav class="bottom-nav" aria-label="앱 페이지 이동">
+          <button class="nav-button active" type="button" data-target-page="home">
+            <span>🏠</span>
+            홈
+          </button>
+          <button class="nav-button" type="button" data-target-page="calendar">
+            <span>📅</span>
+            달력
+          </button>
+          <button class="nav-button" type="button" data-target-page="chat">
+            <span>💬</span>
+            채팅
+          </button>
+          <button class="nav-button" type="button" data-target-page="mypage">
+            <span>👤</span>
+            마이페이지
+          </button>
+        </nav>
       </section>
     </main>
 
