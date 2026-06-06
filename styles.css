@@ -391,6 +391,92 @@ button:disabled {
   margin-bottom: 16px;
 }
 
+.monthly-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.monthly-heading p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.monthly-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.month-field {
+  width: 150px;
+}
+
+.monthly-meal-list {
+  display: grid;
+  gap: 12px;
+  max-height: 520px;
+  margin-top: 16px;
+  padding-right: 4px;
+  overflow: auto;
+}
+
+.monthly-meal-item {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 18px;
+  background: var(--gradient-soft), #fff;
+}
+
+.monthly-date {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  border-radius: 16px;
+  color: #fff;
+  background: var(--gradient);
+  text-align: center;
+  font-weight: 800;
+}
+
+.monthly-date span {
+  display: block;
+  font-size: 12px;
+  opacity: 0.86;
+}
+
+.monthly-date strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.monthly-menu {
+  min-width: 0;
+}
+
+.monthly-menu strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.monthly-menu p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .calorie {
   padding: 8px 10px;
   border-radius: 999px;
@@ -480,8 +566,13 @@ button:disabled {
   }
 
   .search-row,
-  .actions {
+  .actions,
+  .monthly-heading {
     display: grid;
+  }
+
+  .month-field {
+    width: 100%;
   }
 
   .compact-button {

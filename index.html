@@ -98,6 +98,26 @@
           </label>
         </section>
 
+        <section class="card monthly-card">
+          <div class="monthly-heading">
+            <div>
+              <p>월간 급식표</p>
+              <h2 id="monthTitle">이번 달 급식</h2>
+            </div>
+            <label class="field month-field">
+              <span>월 선택</span>
+              <input id="monthInput" type="month" />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button id="loadMonthButton" class="primary-button" type="button">한 달 급식 불러오기</button>
+            <button id="sampleMonthButton" class="secondary-button" type="button">월간 예시 보기</button>
+          </div>
+
+          <div id="monthlyMealList" class="monthly-meal-list" aria-live="polite"></div>
+        </section>
+
         <section class="card meal-card">
           <div class="meal-heading">
             <div>

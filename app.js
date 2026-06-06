@@ -23,6 +23,11 @@ const dateTitle = document.querySelector("#dateTitle");
 const weekStrip = document.querySelector("#weekStrip");
 const prevDayButton = document.querySelector("#prevDayButton");
 const nextDayButton = document.querySelector("#nextDayButton");
+const monthInput = document.querySelector("#monthInput");
+const monthTitle = document.querySelector("#monthTitle");
+const loadMonthButton = document.querySelector("#loadMonthButton");
+const sampleMonthButton = document.querySelector("#sampleMonthButton");
+const monthlyMealList = document.querySelector("#monthlyMealList");
 const mealTitle = document.querySelector("#mealTitle");
 const mealCalorie = document.querySelector("#mealCalorie");
 const mealCard = document.querySelector("#mealCard");
@@ -58,6 +63,7 @@ const sampleMeals = {
 let currentUser = JSON.parse(localStorage.getItem("schoolMealUser")) || null;
 let currentSchool = JSON.parse(localStorage.getItem("meal-app-school")) || sampleSchool;
 let selectedDate = new Date();
+let selectedMonth = new Date();
 let currentMealType = "lunch";
 let currentMeals = sampleMeals;
 
@@ -68,6 +74,16 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+function formatMonth(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function formatNeisDate(date) {
+  return formatDate(date).replaceAll("-", "");
+}
+
 function addDays(date, amount) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);
@@ -76,6 +92,18 @@ function addDays(date, amount) {
 
 function toNeisDate(value) {
   return value.replaceAll("-", "");
+}
+
+function getMonthRange(monthValue) {
+  const [year, month] = monthValue.split("-").map(Number);
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0);
+  return { start, end };
+}
+
+function getWeekday(dateText) {
+  const date = new Date(`${dateText}T00:00:00`);
+  return weekdays[date.getDay()];
 }
 
 function cleanMenuText(text) {
@@ -98,6 +126,8 @@ function openDashboard() {
   renderUser();
   renderSelectedSchool();
   renderDate();
+  renderMonthHeader();
+  renderSampleMonth();
   renderMeal();
   renderComments();
 }
@@ -158,6 +188,13 @@ function renderDate() {
   renderComments();
 }
 
+function renderMonthHeader() {
+  const value = formatMonth(selectedMonth);
+  const month = selectedMonth.getMonth() + 1;
+  monthInput.value = value;
+  monthTitle.textContent = `${selectedMonth.getFullYear()}년 ${month}월 급식`;
+}
+
 function renderWeekStrip() {
   const dayIndex = selectedDate.getDay();
   const start = addDays(selectedDate, -dayIndex);
@@ -189,6 +226,67 @@ function renderNotice(message) {
   mealCalorie.textContent = "-";
   mealCard.innerHTML = `<p class="notice">${message}</p>`;
   allergyBox.hidden = true;
+}
+
+function renderMonthlyNotice(message) {
+  monthlyMealList.innerHTML = `<p class="notice">${message}</p>`;
+}
+
+function normalizeMonthlyMealRows(rows) {
+  return rows
+    .map((row) => ({
+      date: row.MLSV_YMD || "",
+      mealName: row.MMEAL_SC_NM || "급식",
+      menu: cleanMenuText(row.DDISH_NM || ""),
+      calorie: row.CAL_INFO || "",
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderMonthlyMeals(meals) {
+  if (!meals.length) {
+    renderMonthlyNotice("선택한 달의 급식 정보가 없어요.");
+    return;
+  }
+
+  monthlyMealList.innerHTML = meals
+    .map((meal) => {
+      const day = Number(meal.date.slice(6, 8));
+      const dateText = `${meal.date.slice(0, 4)}-${meal.date.slice(4, 6)}-${meal.date.slice(6, 8)}`;
+      const menu = meal.menu.slice(0, 6).join(", ");
+      return `
+        <article class="monthly-meal-item">
+          <div class="monthly-date">
+            <span>${getWeekday(dateText)}</span>
+            <strong>${day}</strong>
+          </div>
+          <div class="monthly-menu">
+            <strong>${meal.mealName}${meal.calorie ? ` · ${meal.calorie}` : ""}</strong>
+            <p>${menu || "메뉴 정보 없음"}</p>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderSampleMonth() {
+  const { start, end } = getMonthRange(formatMonth(selectedMonth));
+  const meals = [];
+
+  for (let day = new Date(start); day <= end; day = addDays(day, 1)) {
+    const dayOfWeek = day.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+    const sample = day.getDate() % 2 === 0 ? sampleMeals.dinner : sampleMeals.lunch;
+    meals.push({
+      date: formatNeisDate(day),
+      mealName: "점심",
+      menu: sample.menu,
+      calorie: sample.calorie,
+    });
+  }
+
+  renderMonthlyMeals(meals);
 }
 
 function saveSchool(school) {
@@ -303,6 +401,35 @@ async function loadMeal() {
   }
 }
 
+async function loadMonthMeals() {
+  const key = apiKeyInput.value.trim();
+  const { start, end } = getMonthRange(monthInput.value);
+  const params = new URLSearchParams({
+    Type: "json",
+    pIndex: "1",
+    pSize: "100",
+    ATPT_OFCDC_SC_CODE: currentSchool.officeCode,
+    SD_SCHUL_CODE: currentSchool.schoolCode,
+    MLSV_FROM_YMD: formatNeisDate(start),
+    MLSV_TO_YMD: formatNeisDate(end),
+    MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
+  });
+  if (key) params.set("KEY", key);
+
+  setBusy(loadMonthButton, true, "한 달 급식 불러오기");
+
+  try {
+    const data = await fetchJson(`https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`);
+    const rows = data.mealServiceDietInfo?.[1]?.row || [];
+    renderMonthlyMeals(normalizeMonthlyMealRows(rows));
+  } catch (error) {
+    renderMonthlyNotice("월간 급식 조회에 실패했어요. API 키나 학교 선택을 확인해주세요.");
+    console.error(error);
+  } finally {
+    setBusy(loadMonthButton, false, "한 달 급식 불러오기");
+  }
+}
+
 function commentsKey() {
   return `mealComments:${formatDate(selectedDate)}`;
 }
@@ -375,10 +502,12 @@ showSearchButton.addEventListener("click", () => {
 
 searchButton.addEventListener("click", searchSchools);
 loadMealButton.addEventListener("click", loadMeal);
+loadMonthButton.addEventListener("click", loadMonthMeals);
 sampleButton.addEventListener("click", () => {
   currentMeals = sampleMeals;
   renderMeal();
 });
+sampleMonthButton.addEventListener("click", renderSampleMonth);
 schoolInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchSchools();
 });
@@ -403,7 +532,15 @@ nextDayButton.addEventListener("click", () => {
 
 dateInput.addEventListener("change", () => {
   selectedDate = new Date(`${dateInput.value}T00:00:00`);
+  selectedMonth = new Date(selectedDate);
   renderDate();
+  renderMonthHeader();
+});
+
+monthInput.addEventListener("change", () => {
+  selectedMonth = new Date(`${monthInput.value}-01T00:00:00`);
+  renderMonthHeader();
+  renderSampleMonth();
 });
 
 addCommentButton.addEventListener("click", addComment);
