@@ -1,35 +1,77 @@
+const loginScreen = document.querySelector("#loginScreen");
+const dashboard = document.querySelector("#dashboard");
+const profileForm = document.querySelector("#profileForm");
+const guestButton = document.querySelector("#guestButton");
+const profileSchool = document.querySelector("#profileSchool");
+const profileGrade = document.querySelector("#profileGrade");
+const profileClass = document.querySelector("#profileClass");
+const profileNumber = document.querySelector("#profileNumber");
+const profileName = document.querySelector("#profileName");
+const welcomeText = document.querySelector("#welcomeText");
+const logoutButton = document.querySelector("#logoutButton");
+const attendanceCard = document.querySelector("#attendanceCard");
+const attendanceCount = document.querySelector("#attendanceCount");
+const showSearchButton = document.querySelector("#showSearchButton");
+const searchPanel = document.querySelector("#searchPanel");
 const apiKeyInput = document.querySelector("#apiKeyInput");
 const schoolInput = document.querySelector("#schoolInput");
 const searchButton = document.querySelector("#searchButton");
 const schoolResults = document.querySelector("#schoolResults");
-const selectedSchool = document.querySelector("#selectedSchool");
+const selectedSchoolLabel = document.querySelector("#selectedSchoolLabel");
 const dateInput = document.querySelector("#dateInput");
+const dateTitle = document.querySelector("#dateTitle");
+const weekStrip = document.querySelector("#weekStrip");
+const prevDayButton = document.querySelector("#prevDayButton");
+const nextDayButton = document.querySelector("#nextDayButton");
+const mealTitle = document.querySelector("#mealTitle");
+const mealCalorie = document.querySelector("#mealCalorie");
 const mealCard = document.querySelector("#mealCard");
+const allergyBox = document.querySelector("#allergyBox");
 const loadMealButton = document.querySelector("#loadMealButton");
 const sampleButton = document.querySelector("#sampleButton");
-const todayLabel = document.querySelector("#todayLabel");
-const dayName = document.querySelector("#dayName");
+const mealTabs = document.querySelectorAll(".meal-tab");
+const commentList = document.querySelector("#commentList");
+const commentInput = document.querySelector("#commentInput");
+const addCommentButton = document.querySelector("#addCommentButton");
 
-const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 const sampleSchool = {
   name: "테스트 학교",
   officeCode: "B10",
   schoolCode: "7010057",
 };
-
-const sampleMeal = {
-  menu: ["찰현미밥", "맑은미역국", "닭갈비", "감자채볶음", "배추김치", "요구르트"],
-  calorie: "812.4 Kcal",
-  origin: "예시 데이터",
+const sampleMeals = {
+  lunch: {
+    menu: ["찰현미밥", "맑은미역국", "닭갈비", "감자채볶음", "배추김치", "요구르트"],
+    calorie: "812.4 Kcal",
+    allergens: ["우유", "계란", "대두", "밀"],
+    origin: "예시 데이터",
+  },
+  dinner: {
+    menu: ["김가루밥", "어묵국", "떡볶이", "순대", "단무지", "사과주스"],
+    calorie: "765.1 Kcal",
+    allergens: ["대두", "밀"],
+    origin: "예시 데이터",
+  },
 };
 
+let currentUser = JSON.parse(localStorage.getItem("schoolMealUser")) || null;
 let currentSchool = JSON.parse(localStorage.getItem("meal-app-school")) || sampleSchool;
+let selectedDate = new Date();
+let currentMealType = "lunch";
+let currentMeals = sampleMeals;
 
 function formatDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function addDays(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
 }
 
 function toNeisDate(value) {
@@ -50,34 +92,103 @@ function setBusy(button, isBusy, text) {
   button.textContent = isBusy ? "불러오는 중..." : text;
 }
 
-function initDate() {
-  const now = new Date();
-  const dateText = formatDate(now);
-  dateInput.value = dateText;
-  todayLabel.textContent = dateText.replaceAll("-", ".");
-  dayName.textContent = weekdays[now.getDay()];
+function openDashboard() {
+  loginScreen.hidden = true;
+  dashboard.hidden = false;
+  renderUser();
+  renderSelectedSchool();
+  renderDate();
+  renderMeal();
+  renderComments();
+}
+
+function openLogin() {
+  loginScreen.hidden = false;
+  dashboard.hidden = true;
+}
+
+function saveUser(user) {
+  currentUser = user;
+  localStorage.setItem("schoolMealUser", JSON.stringify(user));
+  markAttendance();
+  openDashboard();
+}
+
+function renderUser() {
+  const isGuest = !currentUser || currentUser.isGuest;
+  if (isGuest) {
+    welcomeText.textContent = "게스트로 급식만 확인 중";
+    attendanceCard.hidden = true;
+    return;
+  }
+
+  welcomeText.textContent = `${currentUser.name}님, ${currentUser.grade}학년 ${currentUser.class}반`;
+  attendanceCard.hidden = false;
+  attendanceCount.textContent = `${getAttendanceDays().length || 1}일`;
+}
+
+function getAttendanceDays() {
+  return JSON.parse(localStorage.getItem("attendanceDays")) || [];
+}
+
+function markAttendance() {
+  const today = formatDate(new Date());
+  const days = getAttendanceDays();
+  if (!days.includes(today)) {
+    days.push(today);
+    localStorage.setItem("attendanceDays", JSON.stringify(days));
+  }
 }
 
 function renderSelectedSchool() {
-  selectedSchool.textContent = currentSchool.name;
+  selectedSchoolLabel.textContent = currentSchool.name;
+  if (currentUser && !currentUser.isGuest && currentUser.school) {
+    profileSchool.value = currentUser.school;
+  }
 }
 
-function renderMeal(meal) {
-  const menuItems = meal.menu.map((item) => `<li>${item}</li>`).join("");
-  mealCard.innerHTML = `
-    <div class="meal-title">
-      <div>
-        <p class="eyebrow">${meal.origin}</p>
-        <h3>${dateInput.value} 점심</h3>
-      </div>
-      <span class="calorie">${meal.calorie || "칼로리 정보 없음"}</span>
-    </div>
-    <ul class="menu-list">${menuItems}</ul>
-  `;
+function renderDate() {
+  const value = formatDate(selectedDate);
+  const month = selectedDate.getMonth() + 1;
+  const day = selectedDate.getDate();
+  dateInput.value = value;
+  dateTitle.textContent = `${month}월 ${day}일 (${weekdays[selectedDate.getDay()]})`;
+  mealTitle.textContent = `${month}월 ${day}일 급식`;
+  renderWeekStrip();
+  renderComments();
+}
+
+function renderWeekStrip() {
+  const dayIndex = selectedDate.getDay();
+  const start = addDays(selectedDate, -dayIndex);
+  weekStrip.innerHTML = "";
+
+  for (let index = 0; index < 7; index += 1) {
+    const date = addDays(start, index);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `day-button ${formatDate(date) === formatDate(selectedDate) ? "active" : ""}`;
+    button.innerHTML = `<span>${weekdays[date.getDay()]}</span><strong>${date.getDate()}</strong>`;
+    button.addEventListener("click", () => {
+      selectedDate = date;
+      renderDate();
+    });
+    weekStrip.appendChild(button);
+  }
+}
+
+function renderMeal() {
+  const meal = currentMeals[currentMealType] || sampleMeals[currentMealType];
+  mealCalorie.textContent = meal.calorie || "칼로리 정보 없음";
+  mealCard.innerHTML = meal.menu.map((item) => `<div class="meal-item">${item}</div>`).join("");
+  allergyBox.hidden = !meal.allergens?.length;
+  allergyBox.querySelector("p").textContent = meal.allergens?.join(", ") || "";
 }
 
 function renderNotice(message) {
+  mealCalorie.textContent = "-";
   mealCard.innerHTML = `<p class="notice">${message}</p>`;
+  allergyBox.hidden = true;
 }
 
 function saveSchool(school) {
@@ -110,7 +221,7 @@ async function searchSchools() {
   });
   if (key) params.set("KEY", key);
 
-  setBusy(searchButton, true, "학교 검색");
+  setBusy(searchButton, true, "검색");
   schoolResults.innerHTML = "";
 
   try {
@@ -118,7 +229,7 @@ async function searchSchools() {
     const rows = data.schoolInfo?.[1]?.row || [];
 
     if (!rows.length) {
-      schoolResults.innerHTML = `<p class="notice">검색 결과가 없어요. API 키가 없다면 예시 보기로 먼저 테스트해보세요.</p>`;
+      schoolResults.innerHTML = `<p class="notice">검색 결과가 없어요. API 키가 없다면 예시 데이터로 먼저 테스트해보세요.</p>`;
       return;
     }
 
@@ -127,7 +238,7 @@ async function searchSchools() {
         (school, index) => `
           <button class="school-button" type="button" data-index="${index}">
             <strong>${school.SCHUL_NM}</strong><br />
-            ${school.ORG_RDNMA || school.LCTN_SC_NM || "주소 정보 없음"}
+            <span>${school.ORG_RDNMA || school.LCTN_SC_NM || "주소 정보 없음"}</span>
           </button>
         `,
       )
@@ -141,14 +252,14 @@ async function searchSchools() {
           officeCode: school.ATPT_OFCDC_SC_CODE,
           schoolCode: school.SD_SCHUL_CODE,
         });
-        schoolResults.innerHTML = `<p class="notice">${school.SCHUL_NM} 선택 완료. 이제 급식을 불러와보세요.</p>`;
+        schoolResults.innerHTML = `<p class="notice">${school.SCHUL_NM} 선택 완료. 급식을 불러와보세요.</p>`;
       });
     });
   } catch (error) {
-    schoolResults.innerHTML = `<p class="notice">학교 검색에 실패했어요. API 키를 확인하거나 예시 데이터로 테스트해보세요.</p>`;
+    schoolResults.innerHTML = `<p class="notice">학교 검색에 실패했어요. API 키나 네트워크 상태를 확인해주세요.</p>`;
     console.error(error);
   } finally {
-    setBusy(searchButton, false, "학교 검색");
+    setBusy(searchButton, false, "검색");
   }
 }
 
@@ -159,7 +270,7 @@ async function loadMeal() {
     ATPT_OFCDC_SC_CODE: currentSchool.officeCode,
     SD_SCHUL_CODE: currentSchool.schoolCode,
     MLSV_YMD: toNeisDate(dateInput.value),
-    MMEAL_SC_CODE: "2",
+    MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
   });
   if (key) params.set("KEY", key);
 
@@ -174,26 +285,134 @@ async function loadMeal() {
       return;
     }
 
-    renderMeal({
-      menu: cleanMenuText(meal.DDISH_NM),
-      calorie: meal.CAL_INFO,
-      origin: `${currentSchool.name} 공식 급식 데이터`,
-    });
+    currentMeals = {
+      ...currentMeals,
+      [currentMealType]: {
+        menu: cleanMenuText(meal.DDISH_NM),
+        calorie: meal.CAL_INFO,
+        allergens: (meal.DDISH_NM.match(/\(([^)]*)\)/g) || []).slice(0, 4),
+        origin: `${currentSchool.name} 공식 급식 데이터`,
+      },
+    };
+    renderMeal();
   } catch (error) {
-    renderNotice("급식 조회에 실패했어요. API 키가 없거나 네트워크/CORS 문제가 있으면 예시 보기로 화면을 확인할 수 있습니다.");
+    renderNotice("급식 조회에 실패했어요. API 키가 없거나 브라우저 보안 정책 때문에 막힐 수 있습니다.");
     console.error(error);
   } finally {
     setBusy(loadMealButton, false, "급식 불러오기");
   }
 }
 
+function commentsKey() {
+  return `mealComments:${formatDate(selectedDate)}`;
+}
+
+function getComments() {
+  return JSON.parse(localStorage.getItem(commentsKey())) || [];
+}
+
+function renderComments() {
+  const comments = getComments();
+  if (!comments.length) {
+    commentList.innerHTML = `<p class="notice">첫 의견을 남겨보세요.</p>`;
+    return;
+  }
+
+  commentList.innerHTML = comments
+    .map(
+      (comment) => `
+        <div class="comment">
+          <p>${comment.text}</p>
+          <span>${comment.author}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function addComment() {
+  const text = commentInput.value.trim();
+  if (!text) return;
+
+  const comments = getComments();
+  comments.push({
+    text,
+    author: currentUser?.isGuest ? "게스트" : currentUser?.name || "사용자",
+  });
+  localStorage.setItem(commentsKey(), JSON.stringify(comments));
+  commentInput.value = "";
+  renderComments();
+}
+
+profileForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveUser({
+    school: profileSchool.value.trim(),
+    grade: profileGrade.value,
+    class: profileClass.value,
+    number: profileNumber.value,
+    name: profileName.value.trim(),
+    isGuest: false,
+  });
+  if (profileSchool.value.trim()) {
+    saveSchool({ ...sampleSchool, name: profileSchool.value.trim() });
+  }
+});
+
+guestButton.addEventListener("click", () => {
+  saveUser({ name: "게스트", school: "", grade: "", class: "", number: "", isGuest: true });
+});
+
+logoutButton.addEventListener("click", () => {
+  currentUser = null;
+  localStorage.removeItem("schoolMealUser");
+  openLogin();
+});
+
+showSearchButton.addEventListener("click", () => {
+  searchPanel.hidden = !searchPanel.hidden;
+});
+
 searchButton.addEventListener("click", searchSchools);
 loadMealButton.addEventListener("click", loadMeal);
-sampleButton.addEventListener("click", () => renderMeal(sampleMeal));
+sampleButton.addEventListener("click", () => {
+  currentMeals = sampleMeals;
+  renderMeal();
+});
 schoolInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchSchools();
 });
 
-initDate();
-renderSelectedSchool();
-renderMeal(sampleMeal);
+mealTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    currentMealType = tab.dataset.mealType;
+    mealTabs.forEach((button) => button.classList.toggle("active", button === tab));
+    renderMeal();
+  });
+});
+
+prevDayButton.addEventListener("click", () => {
+  selectedDate = addDays(selectedDate, -1);
+  renderDate();
+});
+
+nextDayButton.addEventListener("click", () => {
+  selectedDate = addDays(selectedDate, 1);
+  renderDate();
+});
+
+dateInput.addEventListener("change", () => {
+  selectedDate = new Date(`${dateInput.value}T00:00:00`);
+  renderDate();
+});
+
+addCommentButton.addEventListener("click", addComment);
+commentInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") addComment();
+});
+
+if (currentUser) {
+  openDashboard();
+} else {
+  openLogin();
+}

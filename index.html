@@ -3,62 +3,136 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>오늘급식 테스트</title>
+    <title>급식 알림장</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app">
-      <section class="hero">
-        <div>
-          <p class="brand">오늘급식</p>
-          <h1>우리 학교 급식을 빠르게 확인해요.</h1>
-          <p class="description">
-            학교를 검색하고 날짜를 고르면 오늘의 점심 메뉴를 바로 보여주는 테스트 웹입니다.
-          </p>
-        </div>
-        <div class="date-card">
-          <span id="dayName">오늘</span>
-          <strong id="todayLabel">0000.00.00</strong>
+    <main class="phone-shell">
+      <section id="loginScreen" class="login-screen">
+        <div class="login-card">
+          <div class="app-icon" aria-hidden="true">🎓</div>
+          <h1>급식 알림장</h1>
+          <p>학교 급식을 쉽고 빠르게 확인하세요</p>
+
+          <form id="profileForm" class="login-form">
+            <label class="field">
+              <span>학교명</span>
+              <input id="profileSchool" type="text" placeholder="예: 서울고등학교" required />
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>학년</span>
+                <input id="profileGrade" type="number" min="1" max="6" placeholder="1" required />
+              </label>
+              <label class="field">
+                <span>반</span>
+                <input id="profileClass" type="number" min="1" placeholder="1" required />
+              </label>
+              <label class="field">
+                <span>번호</span>
+                <input id="profileNumber" type="number" min="1" placeholder="1" required />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>이름</span>
+              <input id="profileName" type="text" placeholder="홍길동" required />
+            </label>
+
+            <button class="primary-button" type="submit">로그인</button>
+            <button id="guestButton" class="secondary-button" type="button">게스트로 급식만 확인하기</button>
+          </form>
+
+          <div class="hint-box">알레르기 정보와 급식 의견은 테스트용으로 저장됩니다.</div>
         </div>
       </section>
 
-      <section class="panel">
-        <label class="field">
-          <span>나이스 API 키</span>
-          <input id="apiKeyInput" type="password" placeholder="없으면 예시 데이터로 테스트" />
-        </label>
-
-        <div class="search-row">
-          <label class="field grow">
-            <span>학교 이름</span>
-            <input id="schoolInput" type="search" placeholder="예: 서울고등학교" />
-          </label>
-          <button id="searchButton" type="button">학교 검색</button>
-        </div>
-
-        <div id="schoolResults" class="school-results" aria-live="polite"></div>
-      </section>
-
-      <section class="panel meal-panel">
-        <div class="meal-header">
+      <section id="dashboard" class="dashboard" hidden>
+        <header class="top-bar">
           <div>
-            <p class="eyebrow">선택한 학교</p>
-            <h2 id="selectedSchool">테스트 학교</h2>
+            <h1>급식 알림장</h1>
+            <p id="welcomeText">오늘도 맛있게 먹어요</p>
           </div>
-          <label class="field compact">
-            <span>날짜</span>
+          <div class="top-actions">
+            <button id="showSearchButton" class="icon-button" type="button" aria-label="학교 검색">🔎</button>
+            <button id="logoutButton" class="icon-button" type="button" aria-label="로그아웃">↩</button>
+          </div>
+        </header>
+
+        <section id="attendanceCard" class="stat-card">
+          <div>
+            <span>연속 출석</span>
+            <strong id="attendanceCount">1일</strong>
+          </div>
+          <div class="stat-icon">🔥</div>
+        </section>
+
+        <section id="searchPanel" class="card search-card" hidden>
+          <label class="field">
+            <span>나이스 API 키</span>
+            <input id="apiKeyInput" type="password" placeholder="없으면 예시 데이터로 테스트" />
+          </label>
+
+          <div class="search-row">
+            <label class="field grow">
+              <span>학교 이름</span>
+              <input id="schoolInput" type="search" placeholder="예: 서울고등학교" />
+            </label>
+            <button id="searchButton" class="primary-button compact-button" type="button">검색</button>
+          </div>
+
+          <div id="schoolResults" class="school-results" aria-live="polite"></div>
+        </section>
+
+        <section class="card calendar-card">
+          <div class="card-title">
+            <button id="prevDayButton" class="text-button" type="button">‹</button>
+            <h2 id="dateTitle">오늘</h2>
+            <button id="nextDayButton" class="text-button" type="button">›</button>
+          </div>
+          <div id="weekStrip" class="week-strip" aria-label="주간 날짜 선택"></div>
+          <label class="field date-field">
+            <span>직접 날짜 선택</span>
             <input id="dateInput" type="date" />
           </label>
-        </div>
+        </section>
 
-        <div id="mealCard" class="meal-card">
-          <p class="empty">학교를 검색하거나 예시 급식을 확인해보세요.</p>
-        </div>
+        <section class="card meal-card">
+          <div class="meal-heading">
+            <div>
+              <p id="selectedSchoolLabel">테스트 학교</p>
+              <h2 id="mealTitle">오늘 급식</h2>
+            </div>
+            <span id="mealCalorie" class="calorie">812.4 Kcal</span>
+          </div>
 
-        <div class="actions">
-          <button id="loadMealButton" type="button">급식 불러오기</button>
-          <button id="sampleButton" class="ghost" type="button">예시 보기</button>
-        </div>
+          <div class="meal-tabs">
+            <button id="lunchTab" class="meal-tab active" type="button" data-meal-type="lunch">점심</button>
+            <button id="dinnerTab" class="meal-tab" type="button" data-meal-type="dinner">저녁</button>
+          </div>
+
+          <div id="mealCard" class="meal-list" aria-live="polite"></div>
+
+          <div id="allergyBox" class="allergy-box">
+            <strong>⚠ 알레르기 정보</strong>
+            <p>우유, 계란, 대두, 밀 성분을 확인하세요.</p>
+          </div>
+
+          <div class="actions">
+            <button id="loadMealButton" class="primary-button" type="button">급식 불러오기</button>
+            <button id="sampleButton" class="secondary-button" type="button">예시 보기</button>
+          </div>
+        </section>
+
+        <section class="card comment-card">
+          <h2>급식 의견</h2>
+          <div id="commentList" class="comment-list"></div>
+          <div id="commentForm" class="comment-form">
+            <input id="commentInput" type="text" placeholder="오늘 급식 어땠나요?" />
+            <button id="addCommentButton" class="primary-button compact-button" type="button">등록</button>
+          </div>
+        </section>
       </section>
     </main>
 
