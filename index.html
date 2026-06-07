@@ -178,6 +178,25 @@
             </div>
           </div>
 
+          <div class="api-settings">
+            <h3>나이스 API 설정</h3>
+            <p>
+              나이스 교육정보 개방 포털에서 발급받은 인증키를 저장하면 학교 검색과 급식 조회에 자동으로 사용됩니다.
+            </p>
+            <label class="field">
+              <span>인증키</span>
+              <input id="settingsApiKeyInput" type="password" placeholder="나이스 Open API KEY" />
+            </label>
+            <div class="actions">
+              <button id="saveApiKeyButton" class="primary-button" type="button">API 키 저장</button>
+              <button id="testApiButton" class="secondary-button" type="button">연동 테스트</button>
+            </div>
+            <p id="apiStatusText" class="api-status">API 키가 없어도 샘플 데이터로 화면 테스트는 가능합니다.</p>
+            <a class="portal-link" href="https://open.neis.go.kr/" target="_blank" rel="noreferrer">
+              나이스 교육정보 개방 포털 열기
+            </a>
+          </div>
+
           <button id="mypageLogoutButton" class="secondary-button full-button" type="button">로그아웃</button>
         </section>
 
