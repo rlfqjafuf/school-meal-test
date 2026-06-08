@@ -16,13 +16,8 @@ const profileSummary = document.querySelector("#profileSummary");
 const profileSchoolName = document.querySelector("#profileSchoolName");
 const profileAttendance = document.querySelector("#profileAttendance");
 const profileMealType = document.querySelector("#profileMealType");
-const settingsApiKeyInput = document.querySelector("#settingsApiKeyInput");
-const saveApiKeyButton = document.querySelector("#saveApiKeyButton");
-const testApiButton = document.querySelector("#testApiButton");
-const apiStatusText = document.querySelector("#apiStatusText");
 const showSearchButton = document.querySelector("#showSearchButton");
 const searchPanel = document.querySelector("#searchPanel");
-const apiKeyInput = document.querySelector("#apiKeyInput");
 const schoolInput = document.querySelector("#schoolInput");
 const searchButton = document.querySelector("#searchButton");
 const schoolResults = document.querySelector("#schoolResults");
@@ -77,7 +72,6 @@ let selectedDate = new Date();
 let selectedMonth = new Date();
 let currentMealType = "lunch";
 let currentMeals = sampleMeals;
-let neisApiKey = localStorage.getItem("neisApiKey") || "";
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -132,25 +126,6 @@ function setBusy(button, isBusy, text) {
   button.textContent = isBusy ? "불러오는 중..." : text;
 }
 
-function getNeisApiKey() {
-  return apiKeyInput.value.trim() || settingsApiKeyInput.value.trim() || neisApiKey;
-}
-
-function syncApiKeyInputs() {
-  apiKeyInput.value = neisApiKey;
-  settingsApiKeyInput.value = neisApiKey;
-  renderApiStatus();
-}
-
-function renderApiStatus(message, type) {
-  const hasKey = Boolean(neisApiKey);
-  apiStatusText.textContent = message || (hasKey
-    ? "저장된 API 키가 있습니다. 학교 검색과 급식 조회에 자동으로 사용됩니다."
-    : "API 키가 없어도 샘플 데이터로 화면 테스트는 가능합니다.");
-  apiStatusText.classList.toggle("success", type === "success" || (hasKey && !type));
-  apiStatusText.classList.toggle("error", type === "error");
-}
-
 function openDashboard() {
   loginScreen.hidden = true;
   dashboard.hidden = false;
@@ -161,7 +136,6 @@ function openDashboard() {
   renderSampleMonth();
   renderMeal();
   renderComments();
-  syncApiKeyInputs();
   showPage("home");
 }
 
@@ -364,14 +338,12 @@ async function searchSchools() {
     return;
   }
 
-  const key = getNeisApiKey();
   const params = new URLSearchParams({
     Type: "json",
     pIndex: "1",
     pSize: "8",
     SCHUL_NM: query,
   });
-  if (key) params.set("KEY", key);
 
   setBusy(searchButton, true, "검색");
   schoolResults.innerHTML = "";
@@ -381,7 +353,7 @@ async function searchSchools() {
     const rows = data.schoolInfo?.[1]?.row || [];
 
     if (!rows.length) {
-      schoolResults.innerHTML = `<p class="notice">검색 결과가 없어요. API 키가 없다면 예시 데이터로 먼저 테스트해보세요.</p>`;
+      schoolResults.innerHTML = `<p class="notice">검색 결과가 없어요. 학교 이름을 다시 확인해주세요.</p>`;
       return;
     }
 
@@ -408,7 +380,7 @@ async function searchSchools() {
       });
     });
   } catch (error) {
-    schoolResults.innerHTML = `<p class="notice">학교 검색에 실패했어요. API 키나 네트워크 상태를 확인해주세요.</p>`;
+    schoolResults.innerHTML = `<p class="notice">학교 검색에 실패했어요. 네트워크 상태를 확인해주세요.</p>`;
     console.error(error);
   } finally {
     setBusy(searchButton, false, "검색");
@@ -416,7 +388,6 @@ async function searchSchools() {
 }
 
 async function loadMeal() {
-  const key = getNeisApiKey();
   const params = new URLSearchParams({
     Type: "json",
     ATPT_OFCDC_SC_CODE: currentSchool.officeCode,
@@ -424,7 +395,6 @@ async function loadMeal() {
     MLSV_YMD: toNeisDate(dateInput.value),
     MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
   });
-  if (key) params.set("KEY", key);
 
   setBusy(loadMealButton, true, "급식 불러오기");
 
@@ -448,7 +418,7 @@ async function loadMeal() {
     };
     renderMeal();
   } catch (error) {
-    renderNotice("급식 조회에 실패했어요. API 키가 없거나 브라우저 보안 정책 때문에 막힐 수 있습니다.");
+    renderNotice("급식 조회에 실패했어요. 네트워크 상태나 학교 선택을 확인해주세요.");
     console.error(error);
   } finally {
     setBusy(loadMealButton, false, "급식 불러오기");
@@ -456,7 +426,6 @@ async function loadMeal() {
 }
 
 async function loadMonthMeals() {
-  const key = getNeisApiKey();
   const { start, end } = getMonthRange(monthInput.value);
   const params = new URLSearchParams({
     Type: "json",
@@ -468,7 +437,6 @@ async function loadMonthMeals() {
     MLSV_TO_YMD: formatNeisDate(end),
     MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
   });
-  if (key) params.set("KEY", key);
 
   setBusy(loadMonthButton, true, "한 달 급식 불러오기");
 
@@ -477,39 +445,10 @@ async function loadMonthMeals() {
     const rows = data.mealServiceDietInfo?.[1]?.row || [];
     renderMonthlyMeals(normalizeMonthlyMealRows(rows));
   } catch (error) {
-    renderMonthlyNotice("월간 급식 조회에 실패했어요. API 키나 학교 선택을 확인해주세요.");
+    renderMonthlyNotice("월간 급식 조회에 실패했어요. 네트워크 상태나 학교 선택을 확인해주세요.");
     console.error(error);
   } finally {
     setBusy(loadMonthButton, false, "한 달 급식 불러오기");
-  }
-}
-
-async function testNeisApi() {
-  const key = getNeisApiKey();
-  const params = new URLSearchParams({
-    Type: "json",
-    pIndex: "1",
-    pSize: "1",
-    SCHUL_NM: "서울",
-  });
-  if (key) params.set("KEY", key);
-
-  setBusy(testApiButton, true, "연동 테스트");
-  renderApiStatus("나이스 API 연결을 확인하는 중입니다...");
-
-  try {
-    const data = await fetchJson(`https://open.neis.go.kr/hub/schoolInfo?${params}`);
-    const rows = data.schoolInfo?.[1]?.row || [];
-    if (rows.length) {
-      renderApiStatus("나이스 API 연동이 정상입니다.", "success");
-      return;
-    }
-    renderApiStatus("응답은 받았지만 검색 결과가 없습니다. API 키를 확인해주세요.", "error");
-  } catch (error) {
-    renderApiStatus("나이스 API 연동 테스트에 실패했습니다. 키 또는 네트워크 상태를 확인해주세요.", "error");
-    console.error(error);
-  } finally {
-    setBusy(testApiButton, false, "연동 테스트");
   }
 }
 
@@ -587,21 +526,6 @@ mypageLogoutButton.addEventListener("click", () => {
 
 showSearchButton.addEventListener("click", () => {
   searchPanel.hidden = !searchPanel.hidden;
-});
-
-saveApiKeyButton.addEventListener("click", () => {
-  neisApiKey = settingsApiKeyInput.value.trim();
-  localStorage.setItem("neisApiKey", neisApiKey);
-  syncApiKeyInputs();
-  renderApiStatus(neisApiKey ? "API 키를 저장했습니다." : "저장된 API 키를 비웠습니다.", neisApiKey ? "success" : undefined);
-});
-
-testApiButton.addEventListener("click", testNeisApi);
-
-apiKeyInput.addEventListener("change", () => {
-  neisApiKey = apiKeyInput.value.trim();
-  localStorage.setItem("neisApiKey", neisApiKey);
-  syncApiKeyInputs();
 });
 
 searchButton.addEventListener("click", searchSchools);
