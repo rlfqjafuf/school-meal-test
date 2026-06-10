@@ -350,43 +350,6 @@ button:disabled {
   line-height: 1;
 }
 
-.week-strip {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.day-button {
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  min-height: 62px;
-  border-radius: 16px;
-  padding: 9px 4px;
-  color: var(--muted);
-  background: transparent;
-}
-
-.day-button strong {
-  color: var(--text);
-  font-size: 18px;
-}
-
-.day-button.active {
-  color: #fff;
-  background: var(--gradient);
-  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.25);
-}
-
-.day-button.active strong {
-  color: #fff;
-}
-
-.date-field {
-  margin-top: 6px;
-}
-
 .meal-heading {
   display: flex;
   justify-content: space-between;
@@ -423,13 +386,87 @@ button:disabled {
   width: 150px;
 }
 
+.month-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.calendar-weekday {
+  padding: 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendar-day {
+  min-height: 92px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  padding: 8px 6px;
+  color: var(--text);
+  background: #fff;
+  text-align: left;
+  overflow: hidden;
+}
+
+.calendar-day.muted {
+  border-color: transparent;
+  background: transparent;
+}
+
+.calendar-day.selected {
+  border-color: #667eea;
+  box-shadow: 0 10px 22px rgba(102, 126, 234, 0.16);
+}
+
+.calendar-day-number {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #5f4bb5;
+  background: #efedf7;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.calendar-day.selected .calendar-day-number {
+  color: #fff;
+  background: var(--gradient);
+}
+
+.calendar-meal,
+.calendar-empty {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.calendar-meal {
+  -webkit-line-clamp: 3;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.calendar-empty {
+  -webkit-line-clamp: 2;
+  color: var(--muted);
+}
+
 .monthly-meal-list {
   display: grid;
   gap: 12px;
-  max-height: 520px;
   margin-top: 16px;
   padding-right: 4px;
-  overflow: auto;
 }
 
 .monthly-meal-item {

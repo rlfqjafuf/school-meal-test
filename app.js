@@ -23,13 +23,10 @@ const searchButton = document.querySelector("#searchButton");
 const schoolResults = document.querySelector("#schoolResults");
 const selectedSchoolLabel = document.querySelector("#selectedSchoolLabel");
 const dateInput = document.querySelector("#dateInput");
-const dateTitle = document.querySelector("#dateTitle");
-const weekStrip = document.querySelector("#weekStrip");
-const prevDayButton = document.querySelector("#prevDayButton");
-const nextDayButton = document.querySelector("#nextDayButton");
 const monthInput = document.querySelector("#monthInput");
 const monthTitle = document.querySelector("#monthTitle");
 const loadMonthButton = document.querySelector("#loadMonthButton");
+const monthCalendar = document.querySelector("#monthCalendar");
 const monthlyMealList = document.querySelector("#monthlyMealList");
 const mealTitle = document.querySelector("#mealTitle");
 const mealCalorie = document.querySelector("#mealCalorie");
@@ -55,6 +52,7 @@ let currentMeals = {
   lunch: null,
   dinner: null,
 };
+let monthlyMeals = [];
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -87,6 +85,10 @@ function getWeekday(dateText) {
   return weekdays[date.getDay()];
 }
 
+function toNeisDate(dateText) {
+  return dateText.replaceAll("-", "");
+}
+
 function cleanMenuText(text) {
   return text
     .replaceAll("<br/>", "\n")
@@ -109,6 +111,8 @@ function openDashboard() {
   renderDate();
   renderMonthHeader();
   renderMeal();
+  monthlyMeals = [];
+  renderMonthCalendar();
   renderMonthlyNotice("학교를 선택한 뒤 한 달 급식 불러오기를 눌러주세요.");
   renderComments();
   showPage("home");
@@ -186,9 +190,7 @@ function renderDate() {
   const month = selectedDate.getMonth() + 1;
   const day = selectedDate.getDate();
   dateInput.value = value;
-  dateTitle.textContent = `${month}월 ${day}일 (${weekdays[selectedDate.getDay()]})`;
   mealTitle.textContent = `${month}월 ${day}일 급식`;
-  renderWeekStrip();
   renderComments();
 }
 
@@ -197,25 +199,6 @@ function renderMonthHeader() {
   const month = selectedMonth.getMonth() + 1;
   monthInput.value = value;
   monthTitle.textContent = `${selectedMonth.getFullYear()}년 ${month}월 급식`;
-}
-
-function renderWeekStrip() {
-  const dayIndex = selectedDate.getDay();
-  const start = addDays(selectedDate, -dayIndex);
-  weekStrip.innerHTML = "";
-
-  for (let index = 0; index < 7; index += 1) {
-    const date = addDays(start, index);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `day-button ${formatDate(date) === formatDate(selectedDate) ? "active" : ""}`;
-    button.innerHTML = `<span>${weekdays[date.getDay()]}</span><strong>${date.getDate()}</strong>`;
-    button.addEventListener("click", () => {
-      selectedDate = date;
-      renderDate();
-    });
-    weekStrip.appendChild(button);
-  }
 }
 
 function renderMeal() {
@@ -282,12 +265,68 @@ function renderMonthlyMeals(meals) {
     .join("");
 }
 
+function getMealForDate(dateText) {
+  const neisDate = toNeisDate(dateText);
+  return monthlyMeals.find((meal) => meal.date === neisDate);
+}
+
+function renderMonthCalendar() {
+  const { start, end } = getMonthRange(formatMonth(selectedMonth));
+  const firstWeekday = start.getDay();
+  const daysInMonth = end.getDate();
+  const cells = [];
+
+  weekdays.forEach((day) => {
+    cells.push(`<div class="calendar-weekday">${day}</div>`);
+  });
+
+  for (let index = 0; index < firstWeekday; index += 1) {
+    cells.push(`<div class="calendar-day muted"></div>`);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), day);
+    const dateText = formatDate(date);
+    const meal = getMealForDate(dateText);
+    const isSelected = dateText === formatDate(selectedDate);
+    const menuPreview = meal?.menu?.slice(0, 3).join(", ") || "";
+    cells.push(`
+      <button class="calendar-day ${isSelected ? "selected" : ""}" type="button" data-date="${dateText}">
+        <span class="calendar-day-number">${day}</span>
+        ${meal ? `<span class="calendar-meal">${menuPreview}</span>` : `<span class="calendar-empty">급식 정보 없음</span>`}
+      </button>
+    `);
+  }
+
+  monthCalendar.innerHTML = cells.join("");
+  monthCalendar.querySelectorAll(".calendar-day[data-date]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedDate = new Date(`${button.dataset.date}T00:00:00`);
+      currentMeals = { lunch: null, dinner: null };
+      const meal = getMealForDate(button.dataset.date);
+      if (meal) {
+        currentMeals[currentMealType] = {
+          menu: meal.menu,
+          calorie: meal.calorie,
+          allergens: [],
+          origin: "나이스 API 월간 급식 데이터",
+        };
+      }
+      renderDate();
+      renderMeal();
+      renderMonthCalendar();
+    });
+  });
+}
+
 function saveSchool(school) {
   currentSchool = school;
   localStorage.setItem("meal-app-school", JSON.stringify(currentSchool));
   currentMeals = { lunch: null, dinner: null };
+  monthlyMeals = [];
   renderSelectedSchool();
   renderMeal();
+  renderMonthCalendar();
   renderMonthlyNotice("학교가 선택되었습니다. 한 달 급식 불러오기를 눌러주세요.");
 }
 
@@ -414,7 +453,9 @@ async function loadMonthMeals() {
     });
     const data = await fetchNeisProxy(`/api/meals/month?${proxyParams}`);
     const rows = data.mealServiceDietInfo?.[1]?.row || [];
-    renderMonthlyMeals(normalizeMonthlyMealRows(rows));
+    monthlyMeals = normalizeMonthlyMealRows(rows);
+    renderMonthCalendar();
+    renderMonthlyMeals(monthlyMeals);
   } catch (error) {
     renderMonthlyNotice("월간 급식 조회에 실패했어요. 네트워크 상태나 학교 선택을 확인해주세요.");
     console.error(error);
@@ -512,6 +553,9 @@ mealTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     currentMealType = tab.dataset.mealType;
     mealTabs.forEach((button) => button.classList.toggle("active", button === tab));
+    monthlyMeals = [];
+    renderMonthCalendar();
+    renderMonthlyNotice("급식 종류가 바뀌었습니다. 한 달 급식 불러오기를 다시 눌러주세요.");
     renderMeal();
     renderUser();
   });
@@ -523,26 +567,23 @@ navButtons.forEach((button) => {
   });
 });
 
-prevDayButton.addEventListener("click", () => {
-  selectedDate = addDays(selectedDate, -1);
-  renderDate();
-});
-
-nextDayButton.addEventListener("click", () => {
-  selectedDate = addDays(selectedDate, 1);
-  renderDate();
-});
-
 dateInput.addEventListener("change", () => {
   selectedDate = new Date(`${dateInput.value}T00:00:00`);
   selectedMonth = new Date(selectedDate);
   renderDate();
   renderMonthHeader();
+  renderMonthCalendar();
 });
 
 monthInput.addEventListener("change", () => {
   selectedMonth = new Date(`${monthInput.value}-01T00:00:00`);
+  selectedDate = new Date(selectedMonth);
+  monthlyMeals = [];
+  currentMeals = { lunch: null, dinner: null };
+  renderDate();
   renderMonthHeader();
+  renderMeal();
+  renderMonthCalendar();
   renderMonthlyNotice("선택한 달의 급식을 나이스 API에서 불러오려면 한 달 급식 불러오기를 눌러주세요.");
 });
 

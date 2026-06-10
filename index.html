@@ -81,22 +81,9 @@
         </section>
 
         <section class="card calendar-card page-panel" data-page="calendar">
-          <div class="card-title">
-            <button id="prevDayButton" class="text-button" type="button">‹</button>
-            <h2 id="dateTitle">오늘</h2>
-            <button id="nextDayButton" class="text-button" type="button">›</button>
-          </div>
-          <div id="weekStrip" class="week-strip" aria-label="주간 날짜 선택"></div>
-          <label class="field date-field">
-            <span>직접 날짜 선택</span>
-            <input id="dateInput" type="date" />
-          </label>
-        </section>
-
-        <section class="card monthly-card page-panel" data-page="calendar">
           <div class="monthly-heading">
             <div>
-              <p>월간 급식표</p>
+              <p>월간 캘린더</p>
               <h2 id="monthTitle">이번 달 급식</h2>
             </div>
             <label class="field month-field">
@@ -109,8 +96,11 @@
             <button id="loadMonthButton" class="primary-button" type="button">한 달 급식 불러오기</button>
           </div>
 
+          <div id="monthCalendar" class="month-calendar" aria-label="월간 급식 캘린더"></div>
           <div id="monthlyMealList" class="monthly-meal-list" aria-live="polite"></div>
         </section>
+
+        <input id="dateInput" type="date" hidden />
 
         <section class="card meal-card page-panel active-page" data-page="home">
           <div class="meal-heading">
