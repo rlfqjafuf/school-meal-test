@@ -100,6 +100,24 @@
           <div id="monthlyMealList" class="monthly-meal-list" aria-live="polite"></div>
         </section>
 
+        <section id="calendarDetailModal" class="calendar-detail-modal" hidden>
+          <div class="calendar-detail-backdrop" data-close-calendar-detail></div>
+          <article class="calendar-detail-card" role="dialog" aria-modal="true" aria-labelledby="calendarDetailTitle">
+            <button id="closeCalendarDetailButton" class="detail-close-button" type="button" aria-label="상세 닫기">×</button>
+            <div class="detail-date-badge">
+              <span id="calendarDetailWeekday">월</span>
+              <strong id="calendarDetailDay">1</strong>
+            </div>
+            <div class="detail-content">
+              <p id="calendarDetailSchool">선택된 학교 없음</p>
+              <h2 id="calendarDetailTitle">급식 상세</h2>
+              <span id="calendarDetailCalorie" class="calorie">-</span>
+            </div>
+            <div id="calendarDetailMenu" class="detail-menu-list"></div>
+            <button id="calendarDetailUseButton" class="primary-button full-button" type="button">이 날짜 급식으로 보기</button>
+          </article>
+        </section>
+
         <input id="dateInput" type="date" hidden />
 
         <section class="card meal-card page-panel active-page" data-page="home">

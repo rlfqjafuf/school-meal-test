@@ -462,6 +462,97 @@ button:disabled {
   color: var(--muted);
 }
 
+.calendar-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: end center;
+  padding: 18px;
+}
+
+.calendar-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(25, 23, 36, 0.48);
+  backdrop-filter: blur(8px);
+}
+
+.calendar-detail-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 444px);
+  max-height: min(82vh, 760px);
+  display: grid;
+  gap: 16px;
+  overflow: auto;
+  border-radius: 30px;
+  padding: 24px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(23, 16, 54, 0.34);
+}
+
+.detail-close-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  color: #5f4bb5;
+  background: #efedf7;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.detail-date-badge {
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: #fff;
+  background: var(--gradient);
+  box-shadow: 0 16px 28px rgba(102, 126, 234, 0.3);
+  text-align: center;
+}
+
+.detail-date-badge span {
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.88;
+}
+
+.detail-date-badge strong {
+  font-size: 34px;
+  line-height: 0.9;
+}
+
+.detail-content p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.detail-content h2 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.detail-menu-list {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-menu-item {
+  padding: 15px 16px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  background: var(--gradient-soft), #fff;
+  font-weight: 800;
+}
+
 .monthly-meal-list {
   display: grid;
   gap: 12px;

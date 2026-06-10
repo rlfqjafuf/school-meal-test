@@ -28,6 +28,15 @@ const monthTitle = document.querySelector("#monthTitle");
 const loadMonthButton = document.querySelector("#loadMonthButton");
 const monthCalendar = document.querySelector("#monthCalendar");
 const monthlyMealList = document.querySelector("#monthlyMealList");
+const calendarDetailModal = document.querySelector("#calendarDetailModal");
+const closeCalendarDetailButton = document.querySelector("#closeCalendarDetailButton");
+const calendarDetailWeekday = document.querySelector("#calendarDetailWeekday");
+const calendarDetailDay = document.querySelector("#calendarDetailDay");
+const calendarDetailSchool = document.querySelector("#calendarDetailSchool");
+const calendarDetailTitle = document.querySelector("#calendarDetailTitle");
+const calendarDetailCalorie = document.querySelector("#calendarDetailCalorie");
+const calendarDetailMenu = document.querySelector("#calendarDetailMenu");
+const calendarDetailUseButton = document.querySelector("#calendarDetailUseButton");
 const mealTitle = document.querySelector("#mealTitle");
 const mealCalorie = document.querySelector("#mealCalorie");
 const mealCard = document.querySelector("#mealCard");
@@ -53,6 +62,7 @@ let currentMeals = {
   dinner: null,
 };
 let monthlyMeals = [];
+let detailDate = null;
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -270,6 +280,42 @@ function getMealForDate(dateText) {
   return monthlyMeals.find((meal) => meal.date === neisDate);
 }
 
+function closeCalendarDetail() {
+  calendarDetailModal.hidden = true;
+  detailDate = null;
+}
+
+function openCalendarDetail(dateText) {
+  detailDate = dateText;
+  const date = new Date(`${dateText}T00:00:00`);
+  const meal = getMealForDate(dateText);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  calendarDetailWeekday.textContent = weekdays[date.getDay()];
+  calendarDetailDay.textContent = String(day);
+  calendarDetailSchool.textContent = currentSchool?.name || "선택된 학교 없음";
+  calendarDetailTitle.textContent = `${month}월 ${day}일 ${currentMealType === "lunch" ? "점심" : "저녁"} 급식`;
+  calendarDetailCalorie.textContent = meal?.calorie || "칼로리 정보 없음";
+
+  if (meal?.menu?.length) {
+    calendarDetailMenu.replaceChildren(
+      ...meal.menu.map((item) => {
+        const menuItem = document.createElement("div");
+        menuItem.className = "detail-menu-item";
+        menuItem.textContent = item;
+        return menuItem;
+      }),
+    );
+    calendarDetailUseButton.hidden = false;
+  } else {
+    calendarDetailMenu.innerHTML = `<p class="notice">이 날짜의 급식 정보가 아직 없어요. 한 달 급식 불러오기를 먼저 눌러주세요.</p>`;
+    calendarDetailUseButton.hidden = true;
+  }
+
+  calendarDetailModal.hidden = false;
+}
+
 function renderMonthCalendar() {
   const { start, end } = getMonthRange(formatMonth(selectedMonth));
   const firstWeekday = start.getDay();
@@ -301,22 +347,28 @@ function renderMonthCalendar() {
   monthCalendar.innerHTML = cells.join("");
   monthCalendar.querySelectorAll(".calendar-day[data-date]").forEach((button) => {
     button.addEventListener("click", () => {
-      selectedDate = new Date(`${button.dataset.date}T00:00:00`);
-      currentMeals = { lunch: null, dinner: null };
-      const meal = getMealForDate(button.dataset.date);
-      if (meal) {
-        currentMeals[currentMealType] = {
-          menu: meal.menu,
-          calorie: meal.calorie,
-          allergens: [],
-          origin: "나이스 API 월간 급식 데이터",
-        };
-      }
-      renderDate();
-      renderMeal();
-      renderMonthCalendar();
+      openCalendarDetail(button.dataset.date);
     });
   });
+}
+
+function useDetailDateAsMeal() {
+  if (!detailDate) return;
+  selectedDate = new Date(`${detailDate}T00:00:00`);
+  currentMeals = { lunch: null, dinner: null };
+  const meal = getMealForDate(detailDate);
+  if (meal) {
+    currentMeals[currentMealType] = {
+      menu: meal.menu,
+      calorie: meal.calorie,
+      allergens: [],
+      origin: "나이스 API 월간 급식 데이터",
+    };
+  }
+  renderDate();
+  renderMeal();
+  renderMonthCalendar();
+  closeCalendarDetail();
 }
 
 function saveSchool(school) {
@@ -545,6 +597,13 @@ showSearchButton.addEventListener("click", () => {
 searchButton.addEventListener("click", searchSchools);
 loadMealButton.addEventListener("click", loadMeal);
 loadMonthButton.addEventListener("click", loadMonthMeals);
+closeCalendarDetailButton.addEventListener("click", closeCalendarDetail);
+calendarDetailModal.addEventListener("click", (event) => {
+  if (event.target.matches("[data-close-calendar-detail]")) {
+    closeCalendarDetail();
+  }
+});
+calendarDetailUseButton.addEventListener("click", useDetailDateAsMeal);
 schoolInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchSchools();
 });
