@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: school-meal-neis-proxy
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    envVars:
+      - key: NEIS_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGIN
+        value: https://rlfqjafuf.github.io

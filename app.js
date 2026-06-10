@@ -45,6 +45,7 @@ const addCommentButton = document.querySelector("#addCommentButton");
 const pagePanels = document.querySelectorAll(".page-panel");
 const navButtons = document.querySelectorAll(".nav-button");
 
+const NEIS_PROXY_BASE_URL = "https://school-meal-neis-proxy.onrender.com";
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 const sampleSchool = {
   name: "테스트 학교",
@@ -331,6 +332,17 @@ async function fetchJson(url) {
   return response.json();
 }
 
+async function fetchWithProxy(proxyPath, fallbackUrl) {
+  if (NEIS_PROXY_BASE_URL) {
+    try {
+      return await fetchJson(`${NEIS_PROXY_BASE_URL}${proxyPath}`);
+    } catch (error) {
+      console.warn("프록시 호출 실패, 공개 나이스 API로 재시도합니다.", error);
+    }
+  }
+  return fetchJson(fallbackUrl);
+}
+
 async function searchSchools() {
   const query = schoolInput.value.trim();
   if (!query) {
@@ -349,7 +361,14 @@ async function searchSchools() {
   schoolResults.innerHTML = "";
 
   try {
-    const data = await fetchJson(`https://open.neis.go.kr/hub/schoolInfo?${params}`);
+    const proxyParams = new URLSearchParams({
+      name: query,
+      limit: "8",
+    });
+    const data = await fetchWithProxy(
+      `/api/schools?${proxyParams}`,
+      `https://open.neis.go.kr/hub/schoolInfo?${params}`,
+    );
     const rows = data.schoolInfo?.[1]?.row || [];
 
     if (!rows.length) {
@@ -399,7 +418,16 @@ async function loadMeal() {
   setBusy(loadMealButton, true, "급식 불러오기");
 
   try {
-    const data = await fetchJson(`https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`);
+    const proxyParams = new URLSearchParams({
+      officeCode: currentSchool.officeCode,
+      schoolCode: currentSchool.schoolCode,
+      date: dateInput.value,
+      mealType: currentMealType,
+    });
+    const data = await fetchWithProxy(
+      `/api/meal?${proxyParams}`,
+      `https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`,
+    );
     const meal = data.mealServiceDietInfo?.[1]?.row?.[0];
 
     if (!meal) {
@@ -441,7 +469,16 @@ async function loadMonthMeals() {
   setBusy(loadMonthButton, true, "한 달 급식 불러오기");
 
   try {
-    const data = await fetchJson(`https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`);
+    const proxyParams = new URLSearchParams({
+      officeCode: currentSchool.officeCode,
+      schoolCode: currentSchool.schoolCode,
+      month: monthInput.value,
+      mealType: currentMealType,
+    });
+    const data = await fetchWithProxy(
+      `/api/meals/month?${proxyParams}`,
+      `https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`,
+    );
     const rows = data.mealServiceDietInfo?.[1]?.row || [];
     renderMonthlyMeals(normalizeMonthlyMealRows(rows));
   } catch (error) {
