@@ -30,14 +30,12 @@ const nextDayButton = document.querySelector("#nextDayButton");
 const monthInput = document.querySelector("#monthInput");
 const monthTitle = document.querySelector("#monthTitle");
 const loadMonthButton = document.querySelector("#loadMonthButton");
-const sampleMonthButton = document.querySelector("#sampleMonthButton");
 const monthlyMealList = document.querySelector("#monthlyMealList");
 const mealTitle = document.querySelector("#mealTitle");
 const mealCalorie = document.querySelector("#mealCalorie");
 const mealCard = document.querySelector("#mealCard");
 const allergyBox = document.querySelector("#allergyBox");
 const loadMealButton = document.querySelector("#loadMealButton");
-const sampleButton = document.querySelector("#sampleButton");
 const mealTabs = document.querySelectorAll(".meal-tab");
 const commentList = document.querySelector("#commentList");
 const commentInput = document.querySelector("#commentInput");
@@ -47,32 +45,16 @@ const navButtons = document.querySelectorAll(".nav-button");
 
 const NEIS_PROXY_BASE_URL = "https://school-meal-neis-proxy.onrender.com";
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-const sampleSchool = {
-  name: "테스트 학교",
-  officeCode: "B10",
-  schoolCode: "7010057",
-};
-const sampleMeals = {
-  lunch: {
-    menu: ["찰현미밥", "맑은미역국", "닭갈비", "감자채볶음", "배추김치", "요구르트"],
-    calorie: "812.4 Kcal",
-    allergens: ["우유", "계란", "대두", "밀"],
-    origin: "예시 데이터",
-  },
-  dinner: {
-    menu: ["김가루밥", "어묵국", "떡볶이", "순대", "단무지", "사과주스"],
-    calorie: "765.1 Kcal",
-    allergens: ["대두", "밀"],
-    origin: "예시 데이터",
-  },
-};
 
 let currentUser = JSON.parse(localStorage.getItem("schoolMealUser")) || null;
-let currentSchool = JSON.parse(localStorage.getItem("meal-app-school")) || sampleSchool;
+let currentSchool = JSON.parse(localStorage.getItem("meal-app-school")) || null;
 let selectedDate = new Date();
 let selectedMonth = new Date();
 let currentMealType = "lunch";
-let currentMeals = sampleMeals;
+let currentMeals = {
+  lunch: null,
+  dinner: null,
+};
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -87,18 +69,10 @@ function formatMonth(date) {
   return `${year}-${month}`;
 }
 
-function formatNeisDate(date) {
-  return formatDate(date).replaceAll("-", "");
-}
-
 function addDays(date, amount) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);
   return next;
-}
-
-function toNeisDate(value) {
-  return value.replaceAll("-", "");
 }
 
 function getMonthRange(monthValue) {
@@ -134,8 +108,8 @@ function openDashboard() {
   renderSelectedSchool();
   renderDate();
   renderMonthHeader();
-  renderSampleMonth();
   renderMeal();
+  renderMonthlyNotice("학교를 선택한 뒤 한 달 급식 불러오기를 눌러주세요.");
   renderComments();
   showPage("home");
 }
@@ -185,8 +159,9 @@ function markAttendance() {
 }
 
 function renderSelectedSchool() {
-  selectedSchoolLabel.textContent = currentSchool.name;
-  profileSchoolName.textContent = currentSchool.name;
+  const schoolName = currentSchool?.name || "선택된 학교 없음";
+  selectedSchoolLabel.textContent = schoolName;
+  profileSchoolName.textContent = schoolName;
   if (currentUser && !currentUser.isGuest && currentUser.school) {
     profileSchool.value = currentUser.school;
   }
@@ -244,7 +219,15 @@ function renderWeekStrip() {
 }
 
 function renderMeal() {
-  const meal = currentMeals[currentMealType] || sampleMeals[currentMealType];
+  const meal = currentMeals[currentMealType];
+  if (!currentSchool) {
+    renderNotice("먼저 학교 검색에서 학교를 선택해주세요.");
+    return;
+  }
+  if (!meal) {
+    renderNotice("나이스 API에서 급식 정보를 불러오려면 급식 불러오기를 눌러주세요.");
+    return;
+  }
   mealCalorie.textContent = meal.calorie || "칼로리 정보 없음";
   mealCard.innerHTML = meal.menu.map((item) => `<div class="meal-item">${item}</div>`).join("");
   allergyBox.hidden = !meal.allergens?.length;
@@ -299,29 +282,13 @@ function renderMonthlyMeals(meals) {
     .join("");
 }
 
-function renderSampleMonth() {
-  const { start, end } = getMonthRange(formatMonth(selectedMonth));
-  const meals = [];
-
-  for (let day = new Date(start); day <= end; day = addDays(day, 1)) {
-    const dayOfWeek = day.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-    const sample = day.getDate() % 2 === 0 ? sampleMeals.dinner : sampleMeals.lunch;
-    meals.push({
-      date: formatNeisDate(day),
-      mealName: "점심",
-      menu: sample.menu,
-      calorie: sample.calorie,
-    });
-  }
-
-  renderMonthlyMeals(meals);
-}
-
 function saveSchool(school) {
   currentSchool = school;
   localStorage.setItem("meal-app-school", JSON.stringify(currentSchool));
+  currentMeals = { lunch: null, dinner: null };
   renderSelectedSchool();
+  renderMeal();
+  renderMonthlyNotice("학교가 선택되었습니다. 한 달 급식 불러오기를 눌러주세요.");
 }
 
 async function fetchJson(url) {
@@ -332,15 +299,8 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function fetchWithProxy(proxyPath, fallbackUrl) {
-  if (NEIS_PROXY_BASE_URL) {
-    try {
-      return await fetchJson(`${NEIS_PROXY_BASE_URL}${proxyPath}`);
-    } catch (error) {
-      console.warn("프록시 호출 실패, 공개 나이스 API로 재시도합니다.", error);
-    }
-  }
-  return fetchJson(fallbackUrl);
+async function fetchNeisProxy(proxyPath) {
+  return fetchJson(`${NEIS_PROXY_BASE_URL}${proxyPath}`);
 }
 
 async function searchSchools() {
@@ -350,13 +310,6 @@ async function searchSchools() {
     return;
   }
 
-  const params = new URLSearchParams({
-    Type: "json",
-    pIndex: "1",
-    pSize: "8",
-    SCHUL_NM: query,
-  });
-
   setBusy(searchButton, true, "검색");
   schoolResults.innerHTML = "";
 
@@ -365,10 +318,7 @@ async function searchSchools() {
       name: query,
       limit: "8",
     });
-    const data = await fetchWithProxy(
-      `/api/schools?${proxyParams}`,
-      `https://open.neis.go.kr/hub/schoolInfo?${params}`,
-    );
+    const data = await fetchNeisProxy(`/api/schools?${proxyParams}`);
     const rows = data.schoolInfo?.[1]?.row || [];
 
     if (!rows.length) {
@@ -407,13 +357,10 @@ async function searchSchools() {
 }
 
 async function loadMeal() {
-  const params = new URLSearchParams({
-    Type: "json",
-    ATPT_OFCDC_SC_CODE: currentSchool.officeCode,
-    SD_SCHUL_CODE: currentSchool.schoolCode,
-    MLSV_YMD: toNeisDate(dateInput.value),
-    MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
-  });
+  if (!currentSchool) {
+    renderNotice("먼저 학교 검색에서 학교를 선택해주세요.");
+    return;
+  }
 
   setBusy(loadMealButton, true, "급식 불러오기");
 
@@ -424,10 +371,7 @@ async function loadMeal() {
       date: dateInput.value,
       mealType: currentMealType,
     });
-    const data = await fetchWithProxy(
-      `/api/meal?${proxyParams}`,
-      `https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`,
-    );
+    const data = await fetchNeisProxy(`/api/meal?${proxyParams}`);
     const meal = data.mealServiceDietInfo?.[1]?.row?.[0];
 
     if (!meal) {
@@ -454,17 +398,10 @@ async function loadMeal() {
 }
 
 async function loadMonthMeals() {
-  const { start, end } = getMonthRange(monthInput.value);
-  const params = new URLSearchParams({
-    Type: "json",
-    pIndex: "1",
-    pSize: "100",
-    ATPT_OFCDC_SC_CODE: currentSchool.officeCode,
-    SD_SCHUL_CODE: currentSchool.schoolCode,
-    MLSV_FROM_YMD: formatNeisDate(start),
-    MLSV_TO_YMD: formatNeisDate(end),
-    MMEAL_SC_CODE: currentMealType === "lunch" ? "2" : "3",
-  });
+  if (!currentSchool) {
+    renderMonthlyNotice("먼저 학교 검색에서 학교를 선택해주세요.");
+    return;
+  }
 
   setBusy(loadMonthButton, true, "한 달 급식 불러오기");
 
@@ -475,10 +412,7 @@ async function loadMonthMeals() {
       month: monthInput.value,
       mealType: currentMealType,
     });
-    const data = await fetchWithProxy(
-      `/api/meals/month?${proxyParams}`,
-      `https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`,
-    );
+    const data = await fetchNeisProxy(`/api/meals/month?${proxyParams}`);
     const rows = data.mealServiceDietInfo?.[1]?.row || [];
     renderMonthlyMeals(normalizeMonthlyMealRows(rows));
   } catch (error) {
@@ -541,7 +475,9 @@ profileForm.addEventListener("submit", (event) => {
     isGuest: false,
   });
   if (profileSchool.value.trim()) {
-    saveSchool({ ...sampleSchool, name: profileSchool.value.trim() });
+    schoolInput.value = profileSchool.value.trim();
+    searchPanel.hidden = false;
+    searchSchools();
   }
 });
 
@@ -568,11 +504,6 @@ showSearchButton.addEventListener("click", () => {
 searchButton.addEventListener("click", searchSchools);
 loadMealButton.addEventListener("click", loadMeal);
 loadMonthButton.addEventListener("click", loadMonthMeals);
-sampleButton.addEventListener("click", () => {
-  currentMeals = sampleMeals;
-  renderMeal();
-});
-sampleMonthButton.addEventListener("click", renderSampleMonth);
 schoolInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchSchools();
 });
@@ -612,7 +543,7 @@ dateInput.addEventListener("change", () => {
 monthInput.addEventListener("change", () => {
   selectedMonth = new Date(`${monthInput.value}-01T00:00:00`);
   renderMonthHeader();
-  renderSampleMonth();
+  renderMonthlyNotice("선택한 달의 급식을 나이스 API에서 불러오려면 한 달 급식 불러오기를 눌러주세요.");
 });
 
 addCommentButton.addEventListener("click", addComment);
